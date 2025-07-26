@@ -104,6 +104,18 @@ gcd:
     STR r5, [sp, #8]
     STR r6, [sp, #12]
 
+    @ Ensure r0 is non-negative
+    CMP r0, #0
+    BGE skip_abs0
+    RSBS r0, r0, #0 @ r0 = -r0
+    skip_abs0:
+
+    @ Ensure r1 is non-negative
+    CMP r1, #0
+    BGE skip_abs1
+    RSBS r1, r1, #0 @ r1 = -r1
+    skip_abs1:
+
     # Copy input arguments into preserved registers
     MOV r4, r0
     MOV r5, r1
