@@ -19,7 +19,7 @@
 # Pseudo Code: 
 #   void int mod(int x, int y) {
 #       int quotient = x / y;
-#       int product = x * y;
+#       int product = quotient * y;
 #       int remainder = x - product;
 #
 #       // Fix for negative remainder
@@ -38,7 +38,7 @@ mod:
     STR r4, [sp, #4]
     STR r5, [sp, #8]
     STR r6, [sp, #12]
-    STR r7, [sp, #20]
+    STR r7, [sp, #16]
 
     # Copy passed arguments into r4 and r5
     MOV r4, r0 @ r4 <- dividend
@@ -50,8 +50,8 @@ mod:
     # Store result of divsion function
     MOV r6, r0 @ r6 <- r0 (result)
 
-    # Get the product of the dividend and divisor
-    MUL r7, r4, r5
+    # Get the product of the quotient and divisor
+    MUL r7, r6, r5
 
     # Subtract the product from the dividend to get the remainder
     SUB r0, r4, r7
@@ -65,7 +65,7 @@ mod:
     LDR r4, [sp, #4]
     LDR r5, [sp, #8]
     LDR r6, [sp, #12]
-    LDR r7, [sp, #20]
+    LDR r7, [sp, #16]
     ADD sp, sp, #20
     MOV pc, lr
 # END mod
