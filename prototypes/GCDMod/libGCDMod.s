@@ -1,21 +1,21 @@
 #
-# Program Name: libMod.s
+# Program Name: libGCDMod.s
 # Author: Alfredo Ormeno Zuniga
 # Date: 7/25/2025
 # Purpose:
-#   This file contains utility function for performing the mod operator.
-#   These functions are intended to be called from a main driver program.
+#   This file contains utility functions related to modular arithmetic.
+#   These functions are intended to be called from a main driver program
+#   or other utility modules (e.g., RSA key generation).
 #
 # Functions:
-#   - mod:   Computes the remainder of help her
+#   - mod:   Computes the mathematical modulus (remainder) of two integers.
+#   - gcd:   Computes the greatest common divisor of two integers using the Euclidean Algorithm.
 #
 # Inputs:
-#   r0 - the dividend
-#   r1 - the divisor
+#   Varies by function — see individual function headers for register usage and purpose.
 #
 # Outputs:
-#   r0 - The remainder from dividing r0 / r1
-#
+#   Varies by function — see individual function headers for output registers and behavior.
 
 # Function: mod
 # Purpose: To compute the non-negative remainder of two signed integers.
@@ -77,4 +77,67 @@ mod:
     ADD sp, sp, #20
     MOV pc, lr
 # END mod
+
+# Function: GCD
+# Purpose: Computes the greatest common divisor of two integers using the Euclidean Algorithm.
+#
+# Input:  r0 - first integer (a)
+#         r1 - second integer (b)
+# Output: r0 - the greatest common divisor of a and b
+#
+# Pseudo Code:
+#   int GCD(int a, int b) {
+#       while (b != 0) {
+#           int temp = b;
+#           b = a % b;
+#           a = temp;
+#       }
+#       return a;
+#   }
+.text
+.global gcd
+gcd:
+    # Push the stack
+    SUB sp, sp, #16
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+    STR r6, [sp, #12]
+
+    # Copy input arguments into preserved registers
+    MOV r4, r0
+    MOV r5, r1
+
+    startGCDLoop:
+        CMP r5, #0
+        BEQ endGCDLoop @ if b == 0, exit loop
+
+        MOV r6, r5 @ temp = b
+
+        # Calculate a mod b (mod will use r0, r1 and return result in r0)
+        MOV r0, r4
+        MOV r1, r5
+        BL mod
+
+        MOV r4, r6 @ a = temp
+        MOV r5, r0 @ b = a % b
+        
+        B startGCDLoop
+    endGCDLoop:
+
+    # Return the value of a (GCD)
+    MOV r0, r4
+
+    # Pop the stack
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    LDR r6, [sp, #12]
+    ADD sp, sp, #16
+    MOV pc, lr
+# END gcd
+
+
+
+
 
