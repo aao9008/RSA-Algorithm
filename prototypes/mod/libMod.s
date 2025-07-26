@@ -16,17 +16,25 @@
 # Outputs:
 #   r0 - The remainder from dividing r0 / r1
 #
-# Pseudo Code: 
-#   void int mod(int x, int y) {
+
+# Function: mod
+# Purpose: To compute the non-negative remainder of two signed integers.
+#
+# Input:
+#   r0 - Dividend (numerator)
+#   r1 - Divisor  (denominator)
+#
+# Output:
+#   r0 - The non-negative remainder (r0 mod r1)
+#
+# Pseudo Code:
+#   int mod(int x, int y) {
 #       int quotient = x / y;
 #       int product = quotient * y;
 #       int remainder = x - product;
-#
-#       // Fix for negative remainder
-#       if (remainder < 0){
+#       if (remainder < 0) {
 #           remainder = remainder + y;
 #       }
-#
 #       return remainder;
 #   }
 .text
