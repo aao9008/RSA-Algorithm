@@ -1,5 +1,5 @@
 All: main
-LIB=libMod.o
+LIB=libGCDMod.o
 CC=gcc
 
 main: main.o $(LIB)
