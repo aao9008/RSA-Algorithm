@@ -40,6 +40,12 @@
 .text
 .global mod
 mod:
+    # Program Dictionary 
+    #   r4 - dividend
+    #   r5 - divisor 
+    #   r6 - quotient
+    #   r7 - product of quotient and divisor 
+
     # Push the stack
     SUB sp, sp, #20
     STR lr, [sp, #0]
@@ -65,7 +71,7 @@ mod:
     SUB r0, r4, r7
 
     # Fix for negative remainder
-    CMP r0, #0 @ if remainder <0
+    CMP r0, #0 @ if remainder < 0
     ADDLT r0, r0, r5 @ then add divisor
 
     # Pop the stack
@@ -97,6 +103,11 @@ mod:
 .text
 .global gcd
 gcd:
+    # Program Dictionary
+    #   r4 - absolute value of first integer (a)
+    #   r5 - absolut value of second integer (b)
+    #   r6 - temporary value (temp)
+
     # Push the stack
     SUB sp, sp, #16
     STR lr, [sp, #0]
