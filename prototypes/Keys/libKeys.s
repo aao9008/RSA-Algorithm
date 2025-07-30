@@ -1,3 +1,22 @@
+#
+# Program Name: libKeys.s
+# Author: Alfredo Ormeno Zuniga
+# Date: 7/30/2025
+# Purpose:
+#   This file contains utility functions for RSA key computation written in ARM Assembly.
+#   It includes the implementation of the cprivexp function, which computes the private
+#   key exponent d using the Extended Euclidean Algorithm.
+#
+# Functions:
+#   - cprivexp:      Computes the modular inverse of e mod totient_value to produce d.
+#
+# Inputs:
+#   Vary by function — see individual function headers for specific usage.
+#
+# Outputs:
+#   Vary by function — see individual function headers for specific usage.
+#
+
 # Function: cprivexp
 # Purpose: Compute the private key exponent `d` such that (d * e) ≡ 1 mod totient_value,
 #          using the Extended Euclidean Algorithm.
@@ -46,11 +65,23 @@ cprivexp:
     #   r8 - temp_inverse
     #   r9 - quotient
     #   r10 - remainder
+    #   r11 - totient_value
 
     # Push the stack
+    SUB sp, sp, #36
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+    STR r6, [sp, #12]
+    STR r7, [sp, #16]
+    STR r8, [sp, #20]
+    STR r9, [sp, #24]
+    STR r10, [sp, #28]
+    STR r11, [sp, #32]
 
     MOV r4, r0 @ Move e into r4 (divisor)
     MOV r5, r1 @ Move totient value into r5 (remainder_base)
+    MOV r11, r1 @ Store totient value in r11
 
     MOV r6, #0 @ Initialize old_inverse to 0
     MOV r7, #1 @ Initialize current_inverse to 1
@@ -82,6 +113,40 @@ cprivexp:
         # Update base and divisor
         MOV r5, r4 @ remainder_base = divisor
         MOV r4, r10 @ divisor  = remainder
-        
+
         B startCprivexpLoop
     endCprivexpLoop:
+
+    # if remainder_base != 1
+    CMP r5, #1 
+    BEQ checkOldInverse @ Modular inverse exists -> continue checks
+    # then no modular inverse exists - return -1 to signal error
+    MVN r0, #0
+    B endCprivexp
+
+    checkOldInverse:
+        # if old_inverse < 0 (negative)
+        CMP r6, #0
+        BGE returnOld_inverse @ No changes necessary, return old_inverse as is
+        # then fix the negative inverse
+        ADD r0, r6, r11 @ r0 <- old_inverse + totient_value
+        B endCprivexp @ retrun r0 (this is d)
+
+    returnOld_inverse:
+        MOV r0, r6 @ r0 <- old_inverse
+        B endCprivexp @ retrun old_inverse (this is d)
+
+    endCprivexp:
+    # Pop the stack
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    LDR r6, [sp, #12]
+    LDR r7, [sp, #16]
+    LDR r8, [sp, #20]
+    LDR r9, [sp, #24]
+    LDR r10, [sp, #28]
+    LDR r11, [sp, #32]
+    ADD sp, sp, #36
+    MOV pc, lr
+# END cprivexp
