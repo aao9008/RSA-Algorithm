@@ -157,67 +157,148 @@ cprivexp:
 #          - Satisfies 1 < e < totientValue
 #          - Is coprime to the totient using the GCD function
 #
-# Input:   r0 - totient value (Φ(n) = (p - 1)(q - 1))
+# Input:    r0 - candidate e value
+#           r1 - totient value (Φ(n) = (p - 1)(q - 1))
 #
 # Output:  r0 - validated public exponent (e)
 #
 # Pseudocode:
-#   int validateE(int e, int totient_value) {
-#       isInRange = (e > 1) && (e < totient_value)
-#       isCoprime = (gcd(e, totient_value) == 1)
+#   int validateE(int e, int totientValue) {
+#       isInRange = (e > 1) && (e < totientValue)
+#       isCoprime = (gcd(e, totientValue) == 1)
 #       return isInRange && isCoprime
 #   }
 #
 .text
-.global validateE
 validateE:
     # Program Dictionary
-    #   r2 - condition flag for 1 < e
-    #   r3 - reused for totient and gcd checks
     #   r4 - value e (candidate exponent)
     #   r5 - totientValue (Φ(n))
+    #   r6 - condition flag for 1 < e
+    #   r7 - reused for totient and gcd checks
     
     # Push the stack to preserve return address and callee-saved registers
-    SUB sp, sp, #12
+    SUB sp, sp, #20
     STR lr, [sp, #0]
     STR r4, [sp, #4]
     STR r5, [sp, #8]
+    STR r6, [sp, #12]
+    STR r7, [sp, #16]
 
     # Store passed arguments into preserved registers
     MOV r4, r0 @ r4 <- e
     MOV r5, r1 @ r5 <- totientValue
 
     # Check if e > 1
-    MOV r2, #1 @ assume true
+    MOV r6, #1 @ assume true
     CMP r4, #1 @ compare e with 1
-    MOVLT r2, #0 @ if e <= 1, r2 = false
+    MOVLT r6, #0 @ if e <= 1, r2 = false
 
     # Check if e < totientValue
-    MOV r3, #1 @ assume true
+    MOV r7, #1 @ assume true
     CMP r4, r5 @ compare e with totient
-    MOVGE r3, #0 @ if e >= totientValue, r3 = false
+    MOVGE r7, #0 @ if e >= totientValue, r3 = false
 
     # Combine range checks: 1 < e < totientValue
-    AND r2, r2, r3 @ r2 = r2 && r3
+    AND r6, r6, r7 @ r2 = r2 && r3
 
     # Check if gcd(e, totientValue) == 1
-    MOV r3, #1 @ assume true
+    MOV r7, #1 @ assume true
     MOV r0, r4 @ r0 <- e
     MOV r1, r5 @ r1 <- totient
     BL gcd @ call gcd(e, totient)
     CMP r0, #1
-    MOVNE r3, #0 @ if gcd != 1, r3 = false
+    MOVNE r7, #0 @ if gcd != 1, r3 = false
 
     # Combine all checks: (1 < e < totientValue) && (gcd == 1)
-    AND r0, r2, r3 @ final result in r0
+    AND r0, r6, r7 @ final result in r0
 
     # Pop the stack and return
     LDR lr, [sp, #0]
     LDR r4, [sp, #4]
     LDR r5, [sp, #8]
-    ADD sp, sp, #12
+    LDR r6, [sp, #12]
+    LDR r7, [sp, #16]
+    ADD sp, sp, #20
     MOV pc, lr
 # END validateE
+
+# Function: cpubexp
+# Purpose:
+#   Finds the smallest valid public exponent `e` such that:
+#     1 < e < totientValue
+#     gcd(e, totientValue) == 1
+#
+# Input:
+#   r0 - totient value (Φ(n))
+#
+# Output:
+#   r0 - valid public exponent e (smallest possible satisfying conditions)
+#
+# Pseudocode:
+#   int cpubexp(int totientValue) {
+#       for (int e = 2; e < totientValue; e++) {
+#           if (validateE(e, totientValue))
+#               return e;
+#       }
+#       return -1; // Should never happen if totientValue > 2
+#   }
+#
+.text
+.global  cpubexp
+cpubexp:
+    # Program Dictionary
+    #   r0 - input/output register
+    #        On entry: totient value (Φ(n))
+    #        On exit:  valid public exponent e, or -1 if none found
+    #
+    #   r1 - used as argument to validateE (totient value, copied from r5)
+    #
+    #   r4 - candidate public exponent `e` (starting at 2, incremented each loop)
+    #
+    #   r5 - stored totient value (Φ(n)), copied from r0 for repeated use
+    #
+
+    # Push the stack
+    SUB sp, sp, #12
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+
+    MOV r4, #2 @ Initilaize e (r4 <- 2)
+    MOV r5, r0 @ r5 <- totientValue
+
+    startCpubexpLoop:
+        CMP r4, r5
+        BGE endCpubexpLoop @ if e >= totientValue, exit loop
+
+        # Validate E
+        MOV r0, r4 @ r0 <- e
+        MOV r1, r5 @ r1 <- totientValue
+        BL validateE @ r0 <- isValid (boolean)
+
+        CMP r0, #1
+        BNE cpubexpNext @ if isValid == false, move to next iteration
+        MOV r0, r4
+        B endCpubexp
+        
+        cpubexpNext:
+        ADD r4, r4, #1 @ e++
+        B startCpubexpLoop
+    endCpubexpLoop:
+
+    MVN r0, #0 @ no valid e found, return -1
+
+    endCpubexp:
+    # Pop the stack 
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    ADD sp, sp, #12
+    MOV pc, lr
+# END cpubexp
+
+
 
     
 
