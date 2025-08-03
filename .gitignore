@@ -1,0 +1,14 @@
+.nfs*
+# Ignore object files
+*.o
+
+# Ignore common assembly output executables
+main
+a.out
+
+# Optional: ignore all files with no extension (common for executables)
+# This assumes you don't want to track any extensionless files in the repo
+*.
+
+# Ignore backup or temporary files (optional)
+*~
