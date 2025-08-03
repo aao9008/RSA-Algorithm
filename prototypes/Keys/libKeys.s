@@ -8,7 +8,7 @@
 #   key exponent d using the Extended Euclidean Algorithm.
 #
 # Functions:
-#   - cprivexp:      Computes the modular inverse of e mod totient_value to produce d.
+#   - cprivexp:      Computes the modular inverse of e mod totientValue to produce d.
 #
 # Inputs:
 #   Vary by function — see individual function headers for specific usage.
@@ -18,18 +18,18 @@
 #
 
 # Function: cprivexp
-# Purpose: Compute the private key exponent `d` such that (d * e) ≡ 1 mod totient_value,
+# Purpose: Compute the private key exponent `d` such that (d * e) ≡ 1 mod totientValue,
 #          using the Extended Euclidean Algorithm.
 #
 # Input:   r0 - public exponent (e)
-#          r1 - totient value of n (totient_value = (p - 1)(q - 1))
+#          r1 - totient value of n (totientValue = (p - 1)(q - 1))
 #
-# Output:  r0 - private exponent (d), such that (d * e) mod totient_value = 1
-#          Returns -1 if no modular inverse exists (i.e., e and totient_value are not coprime)
+# Output:  r0 - private exponent (d), such that (d * e) mod totientValue = 1
+#          Returns -1 if no modular inverse exists (i.e., e and totientValue are not coprime)
 #
 # Pseudo Code:
-#   int cprivexp(int e, int totient_value) {
-#       remainder_base = totient_value
+#   int cprivexp(int e, int totientValue) {
+#       remainder_base = totientValue
 #       divisor = e
 #       old_inverse = 0
 #       current_inverse = 1
@@ -47,10 +47,10 @@
 #       }
 #
 #       if (remainder_base ≠ 1)
-#           return -1   // e and totient_value not coprime
+#           return -1   // e and totientValue not coprime
 #
 #       if (old_inverse < 0)
-#           old_inverse = old_inverse + totient_value
+#           old_inverse = old_inverse + totientValue
 #
 #       return old_inverse  // this is d
 #   }
@@ -65,7 +65,7 @@ cprivexp:
     #   r8 - temp_inverse
     #   r9 - quotient
     #   r10 - remainder
-    #   r11 - totient_value
+    #   r11 - totientValue
 
     # Push the stack
     SUB sp, sp, #36
@@ -129,7 +129,7 @@ cprivexp:
         CMP r6, #0
         BGE returnOld_inverse @ No changes necessary, return old_inverse as is
         # then fix the negative inverse
-        ADD r0, r6, r11 @ r0 <- old_inverse + totient_value
+        ADD r0, r6, r11 @ r0 <- old_inverse + totientValue
         B endCprivexp @ retrun r0 (this is d)
 
     returnOld_inverse:
@@ -150,3 +150,79 @@ cprivexp:
     ADD sp, sp, #36
     MOV pc, lr
 # END cprivexp
+
+# Function: cpubexp
+# Purpose: Validate a candidate public exponent `e` for RSA, ensuring that it:
+#          - Is a positive integer
+#          - Satisfies 1 < e < totientValue
+#          - Is coprime to the totient using the GCD function
+#
+# Input:   r0 - totient value (Φ(n) = (p - 1)(q - 1))
+#
+# Output:  r0 - validated public exponent (e)
+#
+# Pseudo Code:
+#   int cpubexp(int e, int totientValue) {
+#
+#       if (e ≤ 1)
+#           return -1
+#       if (e ≥ totientValue)
+#           return -1
+#       if (gcd(e, totientValue) ≠ 1)
+#           return -1
+#
+#       return e
+#   }
+.text
+.global cpubexp
+cpubexp:
+    # Program Dictionary
+    #   r2 - condition flag for 1 < e
+    #   r3 - reused for totient and gcd checks
+    #   r4 - value e (candidate exponent)
+    #   r5 - totientValue (Φ(n))
+    
+    # Push the stack to preserve return address and callee-saved registers
+    SUB sp, sp, #12
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+
+    # Store passed arguments into preserved registers
+    MOV r4, r0 @ r4 <- e
+    MOV r5, r1 @ r5 <- totientValue
+
+    # Check if e > 1
+    MOV r2, #1 @ assume true
+    CMP r4, #1 @ compare e with 1
+    MOVLT r2, #0 @ if e <= 1, r2 = false
+
+    # Check if e < totientValue
+    MOV r3, #1 @ assume true
+    CMP r4, r5 @ compare e with totient
+    MOVGE r3, #0 @ if e >= totientValue, r3 = false
+
+    # Combine range checks: 1 < e < totientValue
+    AND r2, r2, r3 @ r2 = r2 && r3
+
+    # Check if gcd(e, totientValue) == 1
+    MOV r3, #1 @ assume true
+    MOV r0, r4 @ r0 <- e
+    MOV r1, r5 @ r1 <- totient
+    BL gcd @ call gcd(e, totient)
+    CMP r0, #1
+    MOVNE r3, #0 @ if gcd != 1, r3 = false
+
+    # Combine all checks: (1 < e < totientValue) && (gcd == 1)
+    AND r0, r2, r3 @ final result in r0
+
+    # Pop the stack and return
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    ADD sp, sp, #12
+    MOV pc, lr
+# END cpubexp
+
+    
+
