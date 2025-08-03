@@ -151,7 +151,7 @@ cprivexp:
     MOV pc, lr
 # END cprivexp
 
-# Function: cpubexp
+# Function: validateE
 # Purpose: Validate a candidate public exponent `e` for RSA, ensuring that it:
 #          - Is a positive integer
 #          - Satisfies 1 < e < totientValue
@@ -161,21 +161,16 @@ cprivexp:
 #
 # Output:  r0 - validated public exponent (e)
 #
-# Pseudo Code:
-#   int cpubexp(int e, int totientValue) {
-#
-#       if (e ≤ 1)
-#           return -1
-#       if (e ≥ totientValue)
-#           return -1
-#       if (gcd(e, totientValue) ≠ 1)
-#           return -1
-#
-#       return e
+# Pseudocode:
+#   int validateE(int e, int totient_value) {
+#       isInRange = (e > 1) && (e < totient_value)
+#       isCoprime = (gcd(e, totient_value) == 1)
+#       return isInRange && isCoprime
 #   }
+#
 .text
-.global cpubexp
-cpubexp:
+.global validateE
+validateE:
     # Program Dictionary
     #   r2 - condition flag for 1 < e
     #   r3 - reused for totient and gcd checks
@@ -222,7 +217,7 @@ cpubexp:
     LDR r5, [sp, #8]
     ADD sp, sp, #12
     MOV pc, lr
-# END cpubexp
+# END validateE
 
     
 
