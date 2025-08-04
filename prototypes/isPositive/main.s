@@ -1,5 +1,5 @@
 #
-# Program name: isPositive.s
+# Program name: main.s - tests isPositive function
 # Author: Portia Stevenson
 # Date: 7/28/2025
 # Purpose: Given an integer, this function determines whether the 
@@ -64,36 +64,6 @@ main:
     ADD sp, sp, #4
     MOV pc, lr
 
-
-# isPositive: Function to determine whether a number is positive
-# Input: int (integer, r0)
-# Output: r0 (Boolean, r0)
-isPositive:
-  # Push the stack
-  SUB sp, sp, #4     
-  STR lr, [sp]    
-
-  MOV r8, r0 		// input integer in r8
-
-  # if r8>0, it is positive
-  # else: it is not positive
-  CMP r8, #0
-  BLE else_notPos
-    MOV r0, #1
-    B endIf_isPositive
-    
-  else_notPos: 
-    MOV r0, #0
-
-  endIf_isPositive:
-    # Pop from the stack and return to the OS
-    LDR lr, [sp]    	
-    ADD sp, sp, #4   
-    MOV pc, lr          	
-
-# End isPositive function
-
-
 .data
   prompt1: .asciz "\nEnter number: "
   formatString: .asciz "%d"
@@ -101,5 +71,5 @@ isPositive:
   outputPos: .asciz "Your number %d is positive.\n\n"
   outputNotPos:  .asciz "Your number %d is not positive.\n\n"
 
-# End main
+# END OF main
 
