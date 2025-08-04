@@ -1,5 +1,5 @@
 #
-# Program name: totient.s
+# Program name: main.s - to test totient function
 # Author: Portia Stevenson
 # Date: 7/8/2025
 # Purpose: Given input integers p and q, this function calculates 
@@ -52,28 +52,6 @@ main:
   LDR lr, [sp, #0]
   ADD sp, sp, #4
   MOV pc, lr
-
-
-# Function to calculate totient Φ(n) =(p - 1)(q - 1)
-# Input: p (integer, r0), q (integer, r1)
-# Output: totient (integer, r0)
-totient:
-  
-  # Push the stack
-  SUB sp, sp, #4     
-  STR lr, [sp]    
-
-  SUB r0, r0, #1      // p-1 in r0
-  SUB r1, r1, #1      // q-1 in r1
-  MUL r0, r0, r1      // totient in r0
-  
-  # Pop from the stack and return to the OS
-  LDR lr, [sp]    	
-  ADD sp, sp, #4   
-  MOV pc, lr          	
-
-# End totient function
-
 
 .data
   prompt1:  .asciz "\nEnter first number (p): "

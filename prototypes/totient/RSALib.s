@@ -10,8 +10,8 @@
 
 
 .global isSmallNum
-.global isPositive
 .global totient
+.global isPositive
 
 
 .text
@@ -155,5 +155,6 @@ isPositive:
 .data
 
 # END OF isPositive
+
 
 
