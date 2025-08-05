@@ -42,7 +42,7 @@ main:
     LDR r0, =promptTotient
     BL printf
 
-    # Read integer into r5
+    # Read integer into r1
     LDR r0, =formatInput
     LDR r1, =totient
     BL scanf
@@ -61,7 +61,7 @@ main:
 
     #--------------cpubexp function test------------------
     LDR r0, =promptCpubTest
-
+    BL printf
     
     # Prompt: "Enter totient value: "
     LDR r0, =promptTotient
@@ -82,6 +82,31 @@ main:
     LDR r0, =formatOutput2
     BL printf
 
+    #-----------generateKeys Function Test--------
+    # Display test message
+    LDR r0, =promptKeysTest
+    BL printf
+
+    # Prompt: "Enter totient value: "
+    LDR r0, =promptTotient
+    BL printf
+
+    # Read integer into r1
+    LDR r0, =formatInput
+    LDR r1, =totient
+    BL scanf
+
+     # Load arugment into r0 for generateKeys
+    LDR r0, =totient
+    LDR r0, [r0, #0]
+    BL generateKeys
+
+    # Display results
+    MOV r2, r1
+    MOV r1, r0
+    LDR r0, =formatOutput3
+    BL printf
+
     # Pop the stack 
     LDR lr, [sp, #0]
     ADD sp, sp, #4
@@ -90,10 +115,12 @@ main:
 .data
     promptE:         .asciz "Enter public exponent e: "
     promptCpubTest: .asciz "This is a test for the cpubexp funciton. Value e will be calcuated.\n"
+    promptKeysTest: .asciz "This is a test for the generateKeys function. e and d will be generated.\n"
     promptCprivTest: .asciz "This is a test for the cprivexp function. Exponent d will be calculated.\n"
     promptTotient: .asciz "Enter totient value: "
     formatInput: .asciz "%d"
     formatOutput1: .asciz "Private key exponent d = %d\n\n"
-    formatOutput2: .asciz "Public key exponent e = %d\n"
+    formatOutput2: .asciz "Public key exponent e = %d\n\n"
+    formatOutput3: .asciz "The public key exponent (e) is %d and the private key exponent (d) is %d.\n"
     e:               .word 0
     totient:         .word 0
