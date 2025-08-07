@@ -298,7 +298,70 @@ cpubexp:
     MOV pc, lr
 # END cpubexp
 
+#
+# Function: generateKeys
+# Purpose:
+#   Generates a valid RSA public exponent `e` and corresponding private exponent `d`,
+#   using the totient value of n (φ(n) = (p - 1)(q - 1)). This function calls:
+#     - cpubexp to find the smallest valid `e`
+#     - cprivexp to compute `d` such that (d * e) ≡ 1 mod φ(n)
+#
+# Inputs:
+#   r0 - totient value (φ(n))
+#
+# Outputs:
+#   r0 - public exponent (e)
+#   r1 - private exponent (d)
+#
+# Pseudocode:
+#   void generateKeys(int totientValue) {
+#       e = cpubexp(totientValue)
+#       d = cprivexp(e, totientValue)
+#       return (e, d)
+#   }
+#
+.text
+.global generateKeys
+generateKeys:
+    # Program Dictionary:
+    #   r0 - on entry: totientValue
+    #        on exit:  public exponent (e)
+    #   r1 - on exit:  private exponent (d)
+    #   r4 - preserved register used to store totientValue across calls
+    #   r5 - pulbic exponent (e)
+    #   r6 - private exponent (d)
 
+    # Push the stack
+    SUB sp, sp, #16
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+    STR r6, [sp, #12]
+
+    MOV r4, r0 @ r4 <- totientValue
+
+    # Generate public exponent
+    BL cpubexp 
+    MOV r5, r0 @ r5 <- public exponent (e)
+
+    # Generate Private Exponent (d)
+    MOV r0, r5 @ r0 <- e
+    MOV r1, r4 @ r1 <- totientValue
+    BL cprivexp
+    MOV r6, r0 @ r6 <- private exponent (d)
+
+    # Return e and d 
+    MOV r0, r5
+    MOV r1, r6
+
+    # Pop the stack 
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    LDR r6, [sp, #12]
+    ADD sp, sp, #16
+    MOV pc, lr
+# END generateKeys
 
     
 
