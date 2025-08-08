@@ -2,11 +2,35 @@
 # Library name: RSALib.s
 # Author: Team 3
 # Date: 8/3/2025
+#
 # Purpose: This library contains multiple functions required for 
 # an RSA Algorithm designed by 605.204 SU25 Team 3 for national 
 # security and defense personnel assigned to deployed forward 
 # operating bases. 
-# 
+#
+# Functions:
+# 	cprivexp
+# 	cpubexp
+# 	decrypt
+# 	decryptMessage
+# 	encrypt
+# 	encryptMessage
+# 	gcd
+# 	generateAndDisplayKeys
+# 	generateExponents
+# 	isPositive
+# 	isPrime
+# 	isSmallNum
+# 	mod
+# 	modPow
+# 	modulus
+# 	pow
+# 	totient
+# 	validateE
+#
+# Inputs: Varies by function, please see function header.
+# Outputs: Varies by function, please see function header.
+#
 
 .text
 .global pow
@@ -69,10 +93,6 @@ pow:
 
 # END pow
 
-
-
-.text
-.global modulus
 # Function: modulus
 # Author:  Kosuke Ito
 # Purpose: Compute n = p * q
@@ -87,6 +107,8 @@ pow:
 #	n = p * q
 #	return n
 #
+.text
+.global modulus
 modulus:
 
 	SUB sp, sp, #4
@@ -1001,9 +1023,6 @@ encrypt:
     LDR r1, =inputString
     BL scanf
 
-	LDR r0, =test
-	BL printf
-
     # Load scannned values from memory
     LDR r0, =inputString
     LDR r1, =publicExponent
@@ -1121,9 +1140,9 @@ fopen_failed:
 # Function: encrypt
 # Author: Alfredo Ormeno Zuniga
 # Date: 8/8/2025
-# Purpose: To prompt the user for RSA encryption parameters (public exponent,
-#          modulus n, and input message), then call encryptMessage to perform
-#          the encryption.
+# Purpose: To prompt the user for RSA encryption parameters (private exponent and
+#          modulus n), then call decryptMessage to perform
+#          the decryption.
 # Inputs:  None
 # Outputs: None
 # Pseudo Code:
@@ -1453,7 +1472,6 @@ modPow:
 	publicKeyMsg: .asciz "Public Key: (e = %d, n = %d)\n"
 	readMode: .asciz "r"
 	rsaKeysMsg: .asciz "\nYour RSA keys have been generated:\n"
-	test: .asciz "Fuck"
 	valueP: .word 0
 	valueQ:	.word 0
 	writeMode: .asciz "w"
