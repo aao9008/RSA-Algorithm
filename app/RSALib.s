@@ -8,26 +8,8 @@
 # operating bases. 
 # 
 
-
-.global pow
-.global modulus
-.global totient
-.global mod
-.global gcd
-.global isSmallNum
-.global isPositive
-.global isPrime
-.global cprivexp
-.global validateE
-.global cpubexp
-.global decrypt
-# .global encrypt
-
-
-
-
 .text
-
+.global pow
 # Function: pow
 # Author:  Kosuke Ito
 # Purpose: Computes the result of applying an exponent to a base number
@@ -49,7 +31,7 @@
 #		result = result * base
 #		counter += 1
 #	return result
-
+#
 pow:
 	SUB sp, sp, #8
 	STR lr, [sp, #4]
@@ -83,14 +65,14 @@ pow:
 		LDR r4, [sp]
 		LDR lr, [sp, #4]
 		ADD sp, sp, #8
-		MOV pc, lr
+		MOV pc, lr          
 
 # END pow
 
 
 
 .text
-
+.global modulus
 # Function: modulus
 # Author:  Kosuke Ito
 # Purpose: Compute n = p * q
@@ -104,7 +86,7 @@ pow:
 # Pseudo Code:
 #	n = p * q
 #	return n
-
+#
 modulus:
 
 	SUB sp, sp, #4
@@ -119,10 +101,8 @@ modulus:
 
 # END modulus
 
-
-
 .text
-
+.global totient
 #
 # Function name: totient.s
 # Author: Portia Stevenson
@@ -136,7 +116,7 @@ modulus:
 #    - q: integer, stored in r1
 # Output: 
 #    - totient: integer, stored in r0
-
+#
 totient:
   # Program dictionary:
   # r0 - input integer p (function argument); subsequently p-1; subsequently totient
@@ -154,12 +134,7 @@ totient:
   LDR lr, [sp]    	
   ADD sp, sp, #4   
   MOV pc, lr          	
-
-.data
-
 # END OF totient
-
-
 
 # Function: mod
 # Author: Alfredo Ormeno Zuniga
@@ -184,6 +159,7 @@ totient:
 #       return remainder;
 #   }
 .text
+.global mod
 mod:
     # Program Dictionary 
     #   r4 - dividend
@@ -229,9 +205,7 @@ mod:
     MOV pc, lr
 # END mod
 
-
-
-# Function: GCD
+# Function: gcd
 # Author: Alfredo Ormeno Zuniga
 # Date: 7/25/2025
 # Purpose: Computes the greatest common divisor of two integers using the Euclidean Algorithm.
@@ -250,6 +224,7 @@ mod:
 #       return a;
 #   }
 .text
+.global gcd
 gcd:
     # Program Dictionary
     #   r4 - absolute value of first integer (a)
@@ -308,10 +283,6 @@ gcd:
     MOV pc, lr
 # END gcd
 
-
-
-.text
-
 #
 # Function Name: isSmallNum.s
 # Author: Portia Stevenson
@@ -326,6 +297,8 @@ gcd:
 # Output: 
 #   - smallNum: Boolean, stored in r0
 #
+.text
+.global isSmallNum
 isSmallNum:
   # Program dictionary: 
   # r4 - input integer for safekeeping
@@ -355,14 +328,7 @@ isSmallNum:
     LDR r4, [sp, #4]    	
     ADD sp, sp, #8   
     MOV pc, lr          	
-
-.data
-
 # END OF isSmallNum
-
-
-
-.text
 
 #
 # Function name: isPositive.s
@@ -378,7 +344,8 @@ isSmallNum:
 # Output: 
 #   - isPos: Boolean, stored in r0
 #
-
+.text
+.global isPositive
 isPositive:
   # Program dictionary:
   # r4 - input integer
@@ -407,12 +374,7 @@ isPositive:
     LDR r4, [sp, #4]    	
     ADD sp, sp, #8  
     MOV pc, lr          	
-
-.data
-
 # END OF isPositive
-
-
 
 # Function Name: isPrime
 # Author:	Brian Astrove
@@ -439,26 +401,25 @@ isPositive:
 #    so if n has any divisors, at lease of of them must be less or equal to sqrt(n)
 # 
 .text
-.extern __aeabi_idiv
- 
+.global isPrime
 isPrime:
-    # push the stack
-    SUB sp, sp, #16
-    STR lr, [sp]
-    STR r4, [sp, #4]
-    STR r5, [sp, #8]
-    STR r6, [sp, #12]
+  # push the stack
+  SUB sp, sp, #16
+  STR lr, [sp]
+  STR r4, [sp, #4]
+  STR r5, [sp, #8]
+  STR r6, [sp, #12]
 
-    # number expected in r0, store in r6
-    MOV r6, r0
+  # number expected in r0, store in r6
+  MOV r6, r0
 
-    # check if n < 2, and thus not prime
-    CMP r6, #2
-    BLT NotPrime
+  # check if n < 2, and thus not prime
+  CMP r6, #2
+  BLT NotPrime
 
-    MOV r4, #2
+  MOV r4, #2
 
-loop:
+  loop:
     # checks if loop has reached i^2 which determines the number is prime
     MUL r3, r4, r4
     CMP r3, r6
@@ -478,28 +439,25 @@ loop:
     ADD r4, r4,#1
     B loop
 
-Prime:
+  Prime:
     # if prime, set r0 to 1
     MOV r0, #1
     B Done
 
-NotPrime:
+  NotPrime:
     # if not prime, set r0 to 0
     MOV r0, #0
     B Done
 
-Done:
-    #pop the stack
-    LDR lr, [sp]
-    LDR r4, [sp, #4]
-    LDR r5, [sp, #8]   
-    LDR r6, [sp, #12]
-    ADD sp, sp, #16
-    MOV pc, lr
-
-#END isPrime
-
-
+  Done:
+  # pop the stack
+  LDR lr, [sp]
+  LDR r4, [sp, #4]
+  LDR r5, [sp, #8]   
+  LDR r6, [sp, #12]
+  ADD sp, sp, #16
+  MOV pc, lr
+# END isPrime
 
 # Function: cprivexp
 # Author: Alfredo Ormeno Zuniga
@@ -540,8 +498,8 @@ Done:
 #
 #       return old_inverse  // this is d
 #   }
-
 .text
+.global cprivexp
 cprivexp:
     # Program Dictionary
     #   r4 - divisor (starts as public exponenet e)
@@ -637,7 +595,6 @@ cprivexp:
     MOV pc, lr
 # END cprivexp
 
-
 # Function: validateE
 # Author: Alfredo Ormeno Zuniga
 # Date: 7/30/2025
@@ -659,6 +616,7 @@ cprivexp:
 #   }
 #
 .text
+.global validateE
 validateE:
     # Program Dictionary
     #   r4 - value e (candidate exponent)
@@ -712,8 +670,6 @@ validateE:
     MOV pc, lr
 # END validateE
 
-
-
 # Function: cpubexp
 # Author: Alfredo Ormeno Zuniga
 # Date: 7/30/2025
@@ -738,60 +694,58 @@ validateE:
 #   }
 #
 .text
-
+.global cpubexp
 cpubexp:
-    # Program Dictionary
-    #   r0 - input/output register
-    #        On entry: totient value (Φ(n))
-    #        On exit:  valid public exponent e, or -1 if none found
-    #
-    #   r1 - used as argument to validateE (totient value, copied from r5)
-    #
-    #   r4 - candidate public exponent `e` (starting at 2, incremented each loop)
-    #
-    #   r5 - stored totient value (Φ(n)), copied from r0 for repeated use
-    #
+  # Program Dictionary
+  #   r0 - input/output register
+  #        On entry: totient value (Φ(n))
+  #        On exit:  valid public exponent e, or -1 if none found
+  #
+  #   r1 - used as argument to validateE (totient value, copied from r5)
+  #
+  #   r4 - candidate public exponent `e` (starting at 2, incremented each loop)
+  #
+  #   r5 - stored totient value (Φ(n)), copied from r0 for repeated use
+  #
 
-    # Push the stack
-    SUB sp, sp, #12
-    STR lr, [sp, #0]
-    STR r4, [sp, #4]
-    STR r5, [sp, #8]
+  # Push the stack
+  SUB sp, sp, #12
+  STR lr, [sp, #0]
+  STR r4, [sp, #4]
+  STR r5, [sp, #8]
 
-    MOV r4, #2 @ Initilaize e (r4 <- 2)
-    MOV r5, r0 @ r5 <- totientValue
+  MOV r4, #2 @ Initilaize e (r4 <- 2)
+  MOV r5, r0 @ r5 <- totientValue
 
-    startCpubexpLoop:
-        CMP r4, r5
-        BGE endCpubexpLoop @ if e >= totientValue, exit loop
+  startCpubexpLoop:
+    CMP r4, r5
+    BGE endCpubexpLoop @ if e >= totientValue, exit loop
 
-        # Validate E
-        MOV r0, r4 @ r0 <- e
-        MOV r1, r5 @ r1 <- totientValue
-        BL validateE @ r0 <- isValid (boolean)
+    # Validate E
+    MOV r0, r4 @ r0 <- e
+    MOV r1, r5 @ r1 <- totientValue
+    BL validateE @ r0 <- isValid (boolean)
 
-        CMP r0, #1
-        BNE cpubexpNext @ if isValid == false, move to next iteration
-        MOV r0, r4
-        B endCpubexp
-        
-        cpubexpNext:
-        ADD r4, r4, #1 @ e++
-        B startCpubexpLoop
-    endCpubexpLoop:
+    CMP r0, #1
+    BNE cpubexpNext @ if isValid == false, move to next iteration
+    MOV r0, r4
+    B endCpubexp
+    
+    cpubexpNext:
+    ADD r4, r4, #1 @ e++
+    B startCpubexpLoop
+  endCpubexpLoop:
 
-    MVN r0, #0 @ no valid e found, return -1
+  MVN r0, #0 @ no valid e found, return -1
 
-    endCpubexp:
-    # Pop the stack 
-    LDR lr, [sp, #0]
-    LDR r4, [sp, #4]
-    LDR r5, [sp, #8]
-    ADD sp, sp, #12
-    MOV pc, lr
+  endCpubexp:
+  # Pop the stack 
+  LDR lr, [sp, #0]
+  LDR r4, [sp, #4]
+  LDR r5, [sp, #8]
+  ADD sp, sp, #12
+  MOV pc, lr
 # END cpubexp
-
-
 
 #
 # Function name: decrypt
@@ -819,9 +773,8 @@ cpubexp:
 #     Write m to plaintext.txt
 #   Close both files and return
 #   
-
 .text
-
+.global decrypt
 decrypt:
   # Program dictionary:
   # r0 - ciphertext value c (input parameter)
@@ -847,9 +800,9 @@ decrypt:
   STR r9, [sp, #24]
 
   # Save input arguments for safekeeping
-  MOV r4, r0 		// c in r4
-  MOV r5, r1  		// d in r5
-  MOV r6, r2 		// n in r6
+  # MOV r4, r0 		// c in r4
+  MOV r5, r0 		// d in r5
+  MOV r6, r1 		// n in r6
 
   # Open encrypted.txt for reading
   LDR r0, =encryptedFile
@@ -865,7 +818,7 @@ decrypt:
 
   readLoop:
     # Read ciphertext value from encrypted.txt
-    LDR r0, =formatString
+    LDR r0, =formatStringFile
     LDR r1, =ciphertext
     MOV r2, r7 		// reading file pointer
     BL fscanf
@@ -888,7 +841,7 @@ decrypt:
 
       # Calculate (c^d) mod n using modulo function
       MOV r1, r6 	// n in r1
-      BL modulo 	// (c^d) mod n in r0
+      BL mod 	// (c^d) mod n in r0
       MOV r9, r0 	// m (decrypted char) in r9
   
       # Write decrypted character to plaintext.txt
@@ -898,34 +851,500 @@ decrypt:
 
       # Read next character in the encrypted.txt file
       B readLoop
+  endIf_ReadFile:
 
-    endIf_ReadFile:
-      # Close files
+  # Close files
+  MOV r0, r7
+  BL fclose
+  MOV r0, r8
+  BL fclose
+
+  # Pop the stack and return
+  LDR lr, [sp, #0]
+  LDR r4, [sp, #4]
+  LDR r5, [sp, #8]
+  LDR r6, [sp, #12]
+  LDR r7, [sp, #16]
+  LDR r8, [sp, #20]
+  LDR r9, [sp, #24]
+  ADD sp, sp, #28
+  MOV pc, lr
+# END OF decrypt
+
+# Function: encryptMessage
+# Purpose: Encrypt a string and write to encrypted.txt
+# Inputs:
+# r0 - pointer to input string
+# r1 - public key exponent (e)
+# r2 - RSA modulus (n)
+# Output:
+# r0 - number of characters encrypted
+.text
+.global encryptMessage
+encryptMessage:
+	# Program Dictionary:
+	# r4 - String pointer
+	# r5 - exponent (e)
+	# r6 - modulus (n)
+	# r7 - file handle
+	# r8 - character counter
+
+	# Push
+	SUB sp, sp, #24
+	STR lr, [sp, #20]
+	STR r4, [sp, #16]
+	STR r5, [sp, #12]
+	STR r6, [sp, #8]
+	STR r7, [sp, #4]
+	STR r8, [sp]
+
+	# Copy into preserved registers
+	MOV r4, r0	// input string poiter to r4
+	MOV r5, r1	// exponent e to r5
+	MOV r6, r2	// modulus n to r6
+
+	# Open output file
+	LDR r0, =outputFile
+	LDR r1, =open
+	BL fopen
+	MOV r7, r0	// file pointer to r7
+
+	MOV r8, #0	// set character count = 0
+	MOV r1, r5	// e back into r1
+	MOV r0, r4	// string back into r0
+
+	encrypt_loop:
+		LDRB r1, [r0]		// load ASCII
+		ADD r0, r0, #1		// move pointer to next
+		CMP r1, #0		// if end of string, exit
+		BEQ encrypt_done
+
+		SUB sp, sp, #4		// stack pointer down
+		STR r0, [sp]		// store r0 at top
+
+		# get m^e using pow function
+		MOV r0, r1		// m into r0
+		MOV r1, r5		// e into r1
+		BL pow
+
+		# get c = (m^e) mod n using mod function
+		MOV r1, r6		// n into r1
+		BL mod
+
+		# Write
+		SUB sp, sp, #4
+		STR r0, [sp]
+		MOV r2, r0		// encrypted to r2
+		MOV r0, r7
+		LDR r1, =printFormat
+		BL fprintf
+		ADD sp, sp, #4
+
+		LDR r0, [sp]
+		ADD sp, sp, #4
+		ADD r8, r8, #1		// count += 1
+		B encrypt_loop
+
+	encrypt_done:
+  # Close txt
+  MOV r0, r7
+  BL fclose
+
+  MOV r0, r8	// r0 count
+
+  # Pop
+  LDR r8, [sp]
+  LDR r7, [sp, #4]
+  LDR r6, [sp, #8]
+  LDR r5, [sp, #12]
+  LDR r4, [sp, #16]
+  LDR lr, [sp, #20]
+  ADD sp, sp, #24
+  MOV pc, lr
+# END encryptMessage
+
+#
+# Function: generateExponents
+# Purpose:
+#   Generates a valid RSA public exponent `e` and corresponding private exponent `d`,
+#   using the totient value of n (φ(n) = (p - 1)(q - 1)). This function calls:
+#     - cpubexp to find the smallest valid `e`
+#     - cprivexp to compute `d` such that (d * e) ≡ 1 mod φ(n)
+#
+# Inputs:
+#   r0 - totient value (φ(n))
+#
+# Outputs:
+#   r0 - public exponent (e)
+#   r1 - private exponent (d)
+#
+# Pseudocode:
+#   void generateExponents(int totientValue) {
+#       e = cpubexp(totientValue)
+#       d = cprivexp(e, totientValue)
+#       return (e, d)
+#   }
+#
+.text
+.global generateExponents
+generateExponents:
+    # Program Dictionary:
+    #   r0 - on entry: totientValue
+    #        on exit:  public exponent (e)
+    #   r1 - on exit:  private exponent (d)
+    #   r4 - preserved register used to store totientValue across calls
+    #   r5 - pulbic exponent (e)
+    #   r6 - private exponent (d)
+
+    # Push the stack
+    SUB sp, sp, #16
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+    STR r6, [sp, #12]
+
+    MOV r4, r0 @ r4 <- totientValue
+
+    # Generate public exponent
+    BL cpubexp 
+    MOV r5, r0 @ r5 <- public exponent (e)
+
+    # Generate Private Exponent (d)
+    MOV r0, r5 @ r0 <- e
+    MOV r1, r4 @ r1 <- totientValue
+    BL cprivexp
+    MOV r6, r0 @ r6 <- private exponent (d)
+
+    # Return e and d 
+    MOV r0, r5
+    MOV r1, r6
+
+    # Pop the stack 
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    LDR r6, [sp, #12]
+    ADD sp, sp, #16
+    MOV pc, lr
+# END generateExponents
+
+.text
+.global generateAndDisplayKeys
+generateAndDisplayKeys:
+	# Program dictionary
+	#	r4 - integer p 
+	#	r5 - integer q
+	# 	r6 - integer n
+	#	r7 - public exponent e
+	#	r8 - private exponent d
+
+	# Push the stack
+	SUB sp, sp, #8
+	STR lr, [sp, #0]
+	STR r4, [sp, #4]
+
+	# Prompt for valid p value
+	startPLoop:
+		# Display Instructions
+		LDR r0, =promptInstructions
+		BL printf
+
+		# Prompt user for p 
+		LDR r0, =promptP
+		BL printf
+
+		# Scan for user input (integer)
+		LDR r0, =formatInt
+		LDR r1, =valueP
+		BL scanf
+
+		# Load the value p into perserved register
+		LDR r4, =valueP
+		LDR r4, [r4, #0]
+
+		# Check if p is positive
+		MOV r0, r4
+		BL isPositive
+		CMP r0, #0
+		BEQ startPLoop @ if p <= 0, prompt user for input again
+
+		# Check if p < 50.
+		MOV r0, r4
+		BL isSmallNum
+		CMP r0, #0
+		BEQ startPLoop @ if p >= 50, prompt user for input again
+
+		# Check if p is prime
+		MOV r0, r4
+		BL isPrime
+		CMP r0, #0
+		BEQ startPLoop @ if p is not prime, prompt the user for input again
+	# endPLooop
+
+	# Prompt for valid q value
+	startQLoop:
+		# Display Instructions
+		LDR r0, =promptInstructions
+		BL printf
+
+		# Prompt user for p 
+		LDR r0, =promptQ
+		BL printf
+
+		# Scan for user input (integer)
+		LDR r0, =formatInt
+		LDR r1, =valueQ
+		BL scanf
+
+		# Load the value p into perserved register
+		LDR r5, =valueQ
+		LDR r5, [r5, #0]
+
+		# Check if p is positive
+		MOV r0, r5
+		BL isPositive
+		CMP r0, #0
+		BEQ startQLoop @ if p <= 0, prompt user for input again
+
+		# Check if p < 50.
+		MOV r0, r5
+		BL isSmallNum
+		CMP r0, #0
+		BEQ startQLoop @ if p >= 50, prompt user for input again
+
+		# Check if p is prime
+		MOV r0, r5
+		BL isPrime
+		CMP r0, #0
+		BEQ startQLoop @ if p is not prime, prompt the user for input again
+	# endQLooop
+
+	# Calculate n
+	MOV r0, r4 @ r0 <- p
+	MOV r1, r5 @ r1 <- q
+	BL modulus @ n = p * q
+	MOV r6, r0 @ r6 <- n
+
+	# Calculate the totient
+	MOV r0, r4 @ r0 <- p
+	MOV r1, r5 @ r1 <- q
+	BL totient @ r0 <- totient value
+
+	# Generate pulbic and private exponents
+	BL generateExponents
+	MOV r7, r0
+	MOV r8, r1
+
+	LDR r0, =rsaKeysMsg
+	BL printf
+
+	LDR r0, =publicKeyMsg
+	MOV r1, r7
+	MOV r2, r6
+	BL printf
+
+	LDR r0, =privateKeyMsg
+	MOV r1, r8
+	MOV r2, r6
+	BL printf
+	
+	LDR lr, [sp, #0]
+	LDR r4, [sp, #4]
+	ADD sp, sp, #8
+	MOV pc, lr	
+# END generateAndDisplayKeys
+
+# Function: encrypt
+# Author: Alfredo Ormeno Zuniga
+# Date: 8/8/2025
+# Purpose: To prompt the user for RSA encryption parameters (public exponent,
+#          modulus n, and input message), then call encryptMessage to perform
+#          the encryption.
+# Inputs:  None
+# Outputs: None
+# Pseudo Code:
+#     void encrypt() {
+#         print("Enter public exponent:");
+#         int publicExponent = readInt();
+#
+#         print("Enter modulus n:");
+#         int modulusN = readInt();
+#
+#         flushInput();
+#
+#         print("Enter message to encrypt:");
+#         String inputString = readString();
+#
+#         encryptMessage(inputString, publicExponent, modulusN);
+#     }
+#
+.text
+.global encrypt
+encrypt:
+	# Push the stack
+	SUB sp, sp, #4
+	STR lr, [sp, #0]
+
+	# Prompt user for public exponent
+    LDR r0, =promptPublicExponent
+    BL printf
+
+    # Scan for user input (int)
+    LDR r0, =formatInt
+    LDR r1, =publicExponent
+    BL scanf
+
+    # Prompt user for modulus n
+    LDR r0, =promptModulusN
+    BL printf
+
+    # Get user input for modulus n (int)
+    LDR r0, =formatInt
+    LDR r1, =modulusN
+    BL scanf
+
+    @ Flush leftover newline
+    LDR r0, =formatFlush
+    BL scanf
+
+    # Prompt user for message to encrypt
+    LDR r0, =promptString
+    BL printf
+
+    # Scan for user input (string)
+    LDR r0, =formatStr
+    LDR r1, =inputString
+    BL scanf
+
+    # Load scannned values from memory
+    LDR r0, =inputString
+    LDR r1, =publicExponent
+    LDR r1, [r1, #0]
+    LDR r2, =modulusN
+    LDR r2, [r2, #0]
+    BL encryptMessage
+
+	# Pop the stack
+	LDR lr, [sp, #0]
+	ADD sp, sp, #4
+	MOV pc, lr
+# END encrypt
+
+.text
+.global testfunc
+#.extern fopen, fgets, printf
+testfunc:
+    @ Inputs:
+    @   r0 = private exponent d
+    @   r1 = modulus n
+
+    @ Reserve space on stack
+    SUB sp, sp, #24
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+    STR r6, [sp, #12]
+    STR r7, [sp, #16]
+    STR r8, [sp, #20]
+
+    MOV r5, r0      @ d
+    MOV r6, r1      @ n
+
+    @ fopen input
+    LDR r0, =filename
+    LDR r1, =read_mode
+    BL fopen
+    MOV r7, r0      @ input file pointer
+
+    @ fopen output
+    LDR r0, =outfile
+    LDR r1, =write_mode
+    BL fopen
+    MOV r8, r0      @ output file pointer
+
+    decrypt_loop:
+		MOV r0, r7        @ r0 = input FILE*
+		BL fgetc          @ r0 = c (encrypted character), or -1 on EOF
+
+		MVN r1, #0        @ r1 = 0xFFFFFFFF
+		CMP r0, r1
+		BEQ close_files   @ Exit loop on EOF
+
+		@ r0 = c
+		MOV r1, r5        @ r1 = d
+		BL pow            @ r0 = c^d
+
+		MOV r1, r6        @ r1 = n
+		BL mod            @ r0 = (c^d) % n = m (decrypted char)
+
+		MOV r1, r8        @ r1 = output FILE*
+		BL fputc          @ fputc(m, output)
+
+		B decrypt_loop
+
+    close_files:
       MOV r0, r7
       BL fclose
+
       MOV r0, r8
       BL fclose
 
-      # Pop the stack and return
-      LDR lr, [sp, #0]
-      LDR r4, [sp, #4]
-      LDR r5, [sp, #8]
-      LDR r6, [sp, #12]
-      LDR r7, [sp, #16]
-      LDR r8, [sp, #20]
-      LDR r9, [sp, #24]
-      ADD sp, sp, #28
-      MOV pc, lr
+      B end_program
+
+    end_program:
+    @ Restore stack
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    LDR r6, [sp, #12]
+    LDR r7, [sp, #16]
+    LDR r8, [sp, #20]
+    ADD sp, sp, #24
+    MOV pc, lr
+
+
 
 .data
-  formatStringFile:  .asciz "%d"
-  ciphertext:  .word 0
-  encryptedFile:  .asciz "encrypted.txt"
-  plaintextFile:  .asciz "plaintext.txt"
-  read:  .asciz "r"
-  write:  .asciz "w"
+	formatFlush: .asciz "%*c"
+	formatInt: .asciz "%d"
+	formatStr: .asciz "%[^\n]"
+	inputString: .space 512
+	modulusN: .word 0
+	promptModulusN: .asciz "Please enter your calculated n value:\n"
+	promptPublicExponent: .asciz "Please enter your calculated public key (e) value:\n"
+	promptString: .asciz "Please enter a message for encryption. 500 characters max:\n"
+	publicExponent: .word 0
+	promptInstructions: .asciz "\nTo generate keys, please enter a P and Q value.\nP and Q must be integers, prime, positive, and smaller than 50.\n"
+	promptP: .asciz "Please enter a P value: "
+	promptQ: .asciz "Please enter a Q value: "
+	valueP: .word 0
+	valueQ:	.word 0
+	rsaKeysMsg:      .asciz "\nYour RSA keys have been generated:\n"
+	publicKeyMsg:    .asciz "Public Key: (e = %d, n = %d)\n"
+	privateKeyMsg:   .asciz "Private Key: (d = %d, n = %d)\n"
+	formatStringFile:  .asciz "%d"
+	ciphertext:  .word 0
+	encryptedFile:  .asciz "encrypted.txt"
+	plaintextFile:  .asciz "plaintext.txt"
+	read:  .asciz "r"
+	write:  .asciz "w"
+	outputFile:	.asciz "encrypted.txt"
+	open:	.asciz "w"
+	printFormat:	.asciz "%d "
+	test: .asciz "Fuck"
 
-# END OF decrypt
+  filename:     .asciz "encrypted.txt"
+  outfile:      .asciz "plaintext.txt"
+  read_mode:    .asciz "r"
+  write_mode:   .asciz "w"
+  sscanf_fmt:   .asciz "%d%n"
+  buffer:       .space 100
+  cipher_val:   .word 0
+  chars_read:   .word 0
+
+  char_fmt:   .asciz "%s"
+  char_buf:   .space 2        @ 1 byte for char, 1 for null terminator
 
 
 
+	
