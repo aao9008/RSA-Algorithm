@@ -1052,7 +1052,7 @@ encryptMessage:
     MOV r6, r2      @ r6 = modulus n
 
     @ Open file: fopen("encrypted.txt", "w")
-    LDR r0, =outputFile
+    LDR r0, =encryptedFile
     LDR r1, =writeMode
     BL fopen
     MOV r7, r0      @ r7 = FILE*
@@ -1118,7 +1118,7 @@ fopen_failed:
     MOV pc, lr
 # END encryptMessage
 
-# Function: decrypt
+# Function: encrypt
 # Author: Alfredo Ormeno Zuniga
 # Date: 8/8/2025
 # Purpose: To prompt the user for RSA encryption parameters (public exponent,
@@ -1146,12 +1146,12 @@ decrypt:
 	STR lr, [sp, #0]
 
 	# Prompt user for public exponent
-    LDR r0, =promptPublicExponent
+    LDR r0, =promptPrivateExponent
     BL printf
 
     # Scan for user input (int)
     LDR r0, =formatInt
-    LDR r1, =publicExponent
+    LDR r1, =privateExponent
     BL scanf
 
     # Prompt user for modulus n
@@ -1163,7 +1163,7 @@ decrypt:
     LDR r1, =modulusN
 	BL scanf
 
-	LDR r0, =publicExponent
+	LDR r0, =privateExponent
 	LDR r0, [r0, #0]
 	LDR r1, =modulusN
 	LDR r1, [r1, #0]
@@ -1218,21 +1218,21 @@ decryptMessage:
     MOV r5, r0      @ private exponent d
     MOV r6, r1      @ modulus n
 
-    @ fopen infile
-    LDR r0, =infile
-    LDR r1, =read_mode
+    @ fopen encrypted file
+    LDR r0, =encryptedFile
+    LDR r1, =readMode
     BL fopen
     MOV r7, r0
 
-    @ fopen outfile
-    LDR r0, =outfile
-    LDR r1, =write_mode
+    @ fopen decryptedFile
+    LDR r0, =decryptedFile
+    LDR r1, =writeMode
     BL fopen
     MOV r8, r0
 
     @ fgets(buffer, 256, r7)
     LDR r0, =buffer
-    MOV r1, #256
+    MOV r1, #512
     MOV r2, r7
     BL fgets
 
@@ -1247,7 +1247,7 @@ decryptMessage:
 
 		@ sscanf(r10, "%d%n", &intBuffer, &numParsed)
 		MOV r0, r10
-		LDR r1, =formatInt2
+		LDR r1, =formatReadInt
 		LDR r2, =intBuffer
 		@ r3 already = &numParsed
 		BL sscanf
@@ -1424,38 +1424,36 @@ modPow:
     MOV pc, lr
 
 .data
-	promptP: .asciz "Please enter a P value: "
-	promptQ: .asciz "Please enter a Q value: "
-	valueP: .word 0
-	valueQ:	.word 0
+	buffer: .space 512
+	debugErr: .asciz "Failed to open file\n"
+	decryptedFile: .asciz "plaintext.txt"
+	encryptedFile: .asciz "encrypted.txt"
 	flushBuffer: .word 0
-	formatInt: .asciz "%d"
-	formatStr: .asciz "%[^\n]"
-	inputString: .space 512
-	rsaKeysMsg:      .asciz "\nYour RSA keys have been generated:\n"
-	publicKeyMsg:    .asciz "Public Key: (e = %d, n = %d)\n"
-	privateKeyMsg:   .asciz "Private Key: (d = %d, n = %d)\n"
-	formatStringFile:  .asciz "%d"
-	modulusN: .word 0
-	promptModulusN: .asciz "Please enter your calculated n value:\n"
-	promptPublicExponent: .asciz "Please enter your calculated public key (e) value:\n"
-	promptString: .asciz "Please enter a message for encryption. 500 characters max:\n"
-	publicExponent: .word 0
-	promptInstructions: .asciz "\nTo generate keys, please enter a P and Q value.\nP and Q must be integers, prime, positive, and smaller than 50.\n"
-	test: .asciz "Fuck"
-	outfile:      .asciz "plaintext.txt"
-	outputFile:	.asciz "encrypted.txt"
-	read_mode:    .asciz "r"
-	write_mode:   .asciz "w"
-	numParsed:   .word 0
-	printFormat:	.asciz "%d "
-	writeMode:      .asciz "w"
-	formatInt2:   .asciz "%d%n"
-	intBuffer: .word 0
 	fmt_debug1: .asciz "Parsed value: %d\n"
 	fmt_debug2: .asciz "Chars read: %d\n"
-	infile:      .asciz "encrypted.txt"
-	debugErr:       .asciz "Failed to open file\n"
-	buffer:       .space 512
 	formatFlush: .asciz "%*c"
-	
+	formatInt: .asciz "%d"
+	formatReadInt: .asciz "%d%n"
+	formatStr: .asciz "%[^\n]"
+	inputString: .space 512
+	intBuffer: .word 0
+	modulusN: .word 0
+	numParsed:  .word 0
+	printFormat: .asciz "%d "
+	privateExponent: .word 0
+	promptInstructions: .asciz "\nTo generate keys, please enter a P and Q value.\nP and Q must be integers, prime, positive, and smaller than 50.\n"
+	privateKeyMsg:   .asciz "Private Key: (d = %d, n = %d)\n"
+	promptModulusN: .asciz "Please enter your calculated n value:\n"
+	promptP: .asciz "Please enter a P value: "
+	promptPrivateExponent: .asciz "Please enter your calculated private key (d) value:\n"
+	promptPublicExponent: .asciz "Please enter your calculated public key (e) value:\n"
+	promptQ: .asciz "Please enter a Q value: "
+	promptString: .asciz "Please enter a message for encryption. 500 characters max:\n"
+	publicExponent: .word 0
+	publicKeyMsg: .asciz "Public Key: (e = %d, n = %d)\n"
+	readMode: .asciz "r"
+	rsaKeysMsg: .asciz "\nYour RSA keys have been generated:\n"
+	test: .asciz "Fuck"
+	valueP: .word 0
+	valueQ:	.word 0
+	writeMode: .asciz "w"
