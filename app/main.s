@@ -36,11 +36,10 @@ main:
     CMP r1, #2
     BNE endMain
     # Then decrypt message
-    # MOV r0, #0
     MOV r0, #103
     MOV r1, #143
-    BL testfunc
-
+    BL decrypt
+    
     endMain:
     LDR lr, [sp, #0]
     ADD sp, sp, #4

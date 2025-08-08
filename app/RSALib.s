@@ -748,222 +748,6 @@ cpubexp:
 # END cpubexp
 
 #
-# Function name: decrypt
-# Author: Portia Stevenson
-# Date: 8/4/2025
-# Purpose: Reads encrypted ciphertext values from encrypted.txt, decrypts 
-# each value using the RSA decryption formula m = c^d mod n, and writes 
-# the decrypted characters to plaintext.txt file. Uses pow and modulo 
-# functions for calculating m, which represents each decrypted character.
-#
-# Inputs:
-#    - c: ciphertext value, integer, stored in r0
-#    - d: private key exponent, integer, stored in r1
-#    - n: modulus, integer, stored in r2
-# Output:
-#    - None: decrypted characters are written to plaintext.txt
-#
-# Algorithm:
-#   Open encrypted.txt for reading
-#   Open plaintext.txt for writing
-#   While not end of file:
-#     Read ciphertext value c from encrypted.txt
-#     Compute c^d using pow function
-#     Compute (c^d) mod n using modulo function to get plaintext character m
-#     Write m to plaintext.txt
-#   Close both files and return
-#   
-.text
-.global decrypt
-decrypt:
-  # Program dictionary:
-  # r0 - ciphertext value c (input parameter)
-  # r1 - private key exponent d (input parameter); subsequently 
-  #      for temp storage and calculations
-  # r2 - modulo n (input parameter); subsequently for temp 
-  #      storage and calculations
-  # r4 - ciphertext value c for safekeeping
-  # r5 - private key exponent d for safekeeping
-  # r6 - modulus n for safekeeping
-  # r7 - reading file pointer for encrypted.txt
-  # r8 - writing file pointer for plaintext.txt
-  # r9 - decrypted character m
-
-  # Push the stack
-  SUB sp, sp, #28
-  STR lr, [sp, #0]
-  STR r4, [sp, #4]
-  STR r5, [sp, #8]
-  STR r6, [sp, #12]
-  STR r7, [sp, #16]
-  STR r8, [sp, #20]
-  STR r9, [sp, #24]
-
-  # Save input arguments for safekeeping
-  # MOV r4, r0 		// c in r4
-  MOV r5, r0 		// d in r5
-  MOV r6, r1 		// n in r6
-
-  # Open encrypted.txt for reading
-  LDR r0, =encryptedFile
-  LDR r1, =read 	// reading mode for file
-  BL fopen
-  MOV r7, r0  		// reading file pointer in r7
-
-  # Open plaintext.txt for writing
-  LDR r0, =plaintextFile
-  LDR r1, =write 	// writing mode for file
-  BL fopen
-  MOV r8, r0 		// writing file pointer in r8
-
-  readLoop:
-    # Read ciphertext value from encrypted.txt
-    LDR r0, =formatStringFile
-    LDR r1, =ciphertext
-    MOV r2, r7 		// reading file pointer
-    BL fscanf
-    
-    # Check for end of file (EOF). 
-    #   If file end (i.e. -1 in C), exit readLoop and end 
-    #   reading of file
-    #   Otherwise, read the cipher text value, calculate m, 
-    #   and write the decrypted character to output file
-    CMP r0, #-1
-    BEQ endIf_ReadFile
-      # Load ciphertext value
-      LDR r1, =ciphertext
-      LDR r1, [r1]        
-
-      # Calculate c^d using pow function
-      MOV r0, r1 	// c in r0
-      MOV r1, r5   	// d in r1
-      BL pow  		// c^d in r0
-
-      # Calculate (c^d) mod n using modulo function
-      MOV r1, r6 	// n in r1
-      BL mod 	// (c^d) mod n in r0
-      MOV r9, r0 	// m (decrypted char) in r9
-  
-      # Write decrypted character to plaintext.txt
-      MOV r0, r8 	// writing file pointer
-      MOV r1, r9
-      BL fputc
-
-      # Read next character in the encrypted.txt file
-      B readLoop
-  endIf_ReadFile:
-
-  # Close files
-  MOV r0, r7
-  BL fclose
-  MOV r0, r8
-  BL fclose
-
-  # Pop the stack and return
-  LDR lr, [sp, #0]
-  LDR r4, [sp, #4]
-  LDR r5, [sp, #8]
-  LDR r6, [sp, #12]
-  LDR r7, [sp, #16]
-  LDR r8, [sp, #20]
-  LDR r9, [sp, #24]
-  ADD sp, sp, #28
-  MOV pc, lr
-# END OF decrypt
-
-# Function: encryptMessage
-# Purpose: Encrypt a string and write to encrypted.txt
-# Inputs:
-# r0 - pointer to input string
-# r1 - public key exponent (e)
-# r2 - RSA modulus (n)
-# Output:
-# r0 - number of characters encrypted
-.text
-.global encryptMessage
-encryptMessage:
-	# Program Dictionary:
-	# r4 - String pointer
-	# r5 - exponent (e)
-	# r6 - modulus (n)
-	# r7 - file handle
-	# r8 - character counter
-
-	# Push
-	SUB sp, sp, #24
-	STR lr, [sp, #20]
-	STR r4, [sp, #16]
-	STR r5, [sp, #12]
-	STR r6, [sp, #8]
-	STR r7, [sp, #4]
-	STR r8, [sp]
-
-	# Copy into preserved registers
-	MOV r4, r0	// input string poiter to r4
-	MOV r5, r1	// exponent e to r5
-	MOV r6, r2	// modulus n to r6
-
-	# Open output file
-	LDR r0, =outputFile
-	LDR r1, =open
-	BL fopen
-	MOV r7, r0	// file pointer to r7
-
-	MOV r8, #0	// set character count = 0
-	MOV r1, r5	// e back into r1
-	MOV r0, r4	// string back into r0
-
-	encrypt_loop:
-		LDRB r1, [r0]		// load ASCII
-		ADD r0, r0, #1		// move pointer to next
-		CMP r1, #0		// if end of string, exit
-		BEQ encrypt_done
-
-		SUB sp, sp, #4		// stack pointer down
-		STR r0, [sp]		// store r0 at top
-
-		# get m^e using pow function
-		MOV r0, r1		// m into r0
-		MOV r1, r5		// e into r1
-		BL pow
-
-		# get c = (m^e) mod n using mod function
-		MOV r1, r6		// n into r1
-		BL mod
-
-		# Write
-		SUB sp, sp, #4
-		STR r0, [sp]
-		MOV r2, r0		// encrypted to r2
-		MOV r0, r7
-		LDR r1, =printFormat
-		BL fprintf
-		ADD sp, sp, #4
-
-		LDR r0, [sp]
-		ADD sp, sp, #4
-		ADD r8, r8, #1		// count += 1
-		B encrypt_loop
-
-	encrypt_done:
-  # Close txt
-  MOV r0, r7
-  BL fclose
-
-  MOV r0, r8	// r0 count
-
-  # Pop
-  LDR r8, [sp]
-  LDR r7, [sp, #4]
-  LDR r6, [sp, #8]
-  LDR r5, [sp, #12]
-  LDR r4, [sp, #16]
-  LDR lr, [sp, #20]
-  ADD sp, sp, #24
-  MOV pc, lr
-# END encryptMessage
-
-#
 # Function: generateExponents
 # Purpose:
 #   Generates a valid RSA public exponent `e` and corresponding private exponent `d`,
@@ -1201,10 +985,11 @@ encrypt:
     # Get user input for modulus n (int)
     LDR r0, =formatInt
     LDR r1, =modulusN
-    BL scanf
+	BL scanf
 
     @ Flush leftover newline
     LDR r0, =formatFlush
+	LDR r1, =flushBuffer
     BL scanf
 
     # Prompt user for message to encrypt
@@ -1215,6 +1000,9 @@ encrypt:
     LDR r0, =formatStr
     LDR r1, =inputString
     BL scanf
+
+	LDR r0, =test
+	BL printf
 
     # Load scannned values from memory
     LDR r0, =inputString
@@ -1230,15 +1018,352 @@ encrypt:
 	MOV pc, lr
 # END encrypt
 
+# Function: encryptMessage
+# Purpose: Encrypt a string and write to encrypted.txt
+# Inputs:
+# r0 - pointer to input string
+# r1 - public key exponent (e)
+# r2 - RSA modulus (n)
+# Output:
+# r0 - number of characters encrypted
 .text
-.global testfunc
-#.extern fopen, fgets, printf
-testfunc:
+.global encryptMessage
+encryptMessage:
     @ Inputs:
-    @   r0 = private exponent d
-    @   r1 = modulus n
+    @ r0 = pointer to input string
+    @ r1 = public exponent (e)
+    @ r2 = modulus (n)
+    @ Output:
+    @ r0 = number of characters encrypted
 
-    @ Reserve space on stack
+    @ Stack usage: save r4-r10, lr (total 7 registers)
+    SUB sp, sp, #28
+    STR lr, [sp, #24]
+    STR r4, [sp, #20]
+    STR r5, [sp, #16]
+    STR r6, [sp, #12]
+    STR r7, [sp, #8]
+    STR r8, [sp, #4]
+    STR r9, [sp, #0]
+
+    @ Save arguments to preserved registers
+    MOV r4, r0      @ r4 = string pointer
+    MOV r5, r1      @ r5 = exponent e
+    MOV r6, r2      @ r6 = modulus n
+
+    @ Open file: fopen("encrypted.txt", "w")
+    LDR r0, =outputFile
+    LDR r1, =writeMode
+    BL fopen
+    MOV r7, r0      @ r7 = FILE*
+
+    CMP r7, #0
+    BEQ fopen_failed
+
+    MOV r8, #0      @ r8 = character counter
+
+	encrypt_loop:
+		LDRB r9, [r4]       @ load current character (ASCII)
+		CMP r9, #0
+		BEQ encrypt_done
+
+		@ Encrypt: c = (m^e) mod n
+		MOV r0, r9
+		MOV r1, r5
+		MOV r2, r6
+		BL modPow
+		MOV r10, r0         @ r10 = encrypted result
+
+		@ Write to file: fprintf(file, "%d ", c)
+		MOV r0, r7
+		LDR r1, =printFormat
+		MOV r2, r10
+		BL fprintf
+
+		ADD r4, r4, #1      @ advance string
+		ADD r8, r8, #1      @ increment char count
+		B encrypt_loop
+
+	encrypt_done:
+    MOV r0, r7
+    BL fclose
+
+    MOV r0, r8          @ return encrypted character count
+
+    @ Restore stack
+    LDR r9, [sp, #0]
+    LDR r8, [sp, #4]
+    LDR r7, [sp, #8]
+    LDR r6, [sp, #12]
+    LDR r5, [sp, #16]
+    LDR r4, [sp, #20]
+    LDR lr, [sp, #24]
+    ADD sp, sp, #28
+    MOV pc, lr
+
+fopen_failed:
+    LDR r0, =debugErr
+    BL printf
+    MOV r0, #0
+
+    @ Restore stack and return
+    LDR r9, [sp, #0]
+    LDR r8, [sp, #4]
+    LDR r7, [sp, #8]
+    LDR r6, [sp, #12]
+    LDR r5, [sp, #16]
+    LDR r4, [sp, #20]
+    LDR lr, [sp, #24]
+    ADD sp, sp, #28
+    MOV pc, lr
+# END encryptMessage
+
+# Function: decrypt
+# Author: Alfredo Ormeno Zuniga
+# Date: 8/8/2025
+# Purpose: To prompt the user for RSA encryption parameters (public exponent,
+#          modulus n, and input message), then call encryptMessage to perform
+#          the encryption.
+# Inputs:  None
+# Outputs: None
+# Pseudo Code:
+#     void encrypt() {
+#         print("Enter private exponent:");
+#         int publicExponent = readInt();
+#
+#         print("Enter modulus n:");
+#         int modulusN = readInt();
+#
+#         decryptMessage(publicExponent, modulusN);
+#		
+#		  return;
+#     }
+#
+.text
+.global decrypt
+decrypt:
+	SUB sp, sp, #4
+	STR lr, [sp, #0]
+
+	# Prompt user for public exponent
+    LDR r0, =promptPublicExponent
+    BL printf
+
+    # Scan for user input (int)
+    LDR r0, =formatInt
+    LDR r1, =publicExponent
+    BL scanf
+
+    # Prompt user for modulus n
+    LDR r0, =promptModulusN
+    BL printf
+
+    # Get user input for modulus n (int)
+    LDR r0, =formatInt
+    LDR r1, =modulusN
+	BL scanf
+
+	LDR r0, =publicExponent
+	LDR r0, [r0, #0]
+	LDR r1, =modulusN
+	LDR r1, [r1, #0]
+
+	BL decryptMessage
+
+	LDR lr, [sp, #0]
+	ADD sp, sp, #4
+	MOV pc, lr
+# END decrypt
+
+#
+# Function name: decryptMessage
+# Author: Portia Stevenson
+# Date: 8/4/2025
+# Purpose: Reads encrypted ciphertext values from encrypted.txt, decrypts 
+# each value using the RSA decryption formula m = c^d mod n, and writes 
+# the decrypted characters to plaintext.txt file. Uses pow and modulo 
+# functions for calculating m, which represents each decrypted character.
+#
+# Inputs:
+#    - c: ciphertext value, integer, stored in r0
+#    - d: private key exponent, integer, stored in r1
+#    - n: modulus, integer, stored in r2
+# Output:
+#    - None: decrypted characters are written to plaintext.txt
+#
+# Algorithm:
+#   Open encrypted.txt for reading
+#   Open plaintext.txt for writing
+#   While not end of file:
+#     Read ciphertext value c from encrypted.txt
+#     Compute c^d using pow function
+#     Compute (c^d) mod n using modulo function to get plaintext character m
+#     Write m to plaintext.txt
+#   Close both files and return
+#   
+.text
+.global decryptMessage
+decryptMessage:
+    @ Reserve space
+    SUB sp, sp, #32
+    STR lr, [sp, #0]
+    STR r4, [sp, #4]
+    STR r5, [sp, #8]
+    STR r6, [sp, #12]
+    STR r7, [sp, #16]
+    STR r8, [sp, #20]
+    STR r9, [sp, #24]
+    STR r10, [sp, #28]
+
+    MOV r5, r0      @ private exponent d
+    MOV r6, r1      @ modulus n
+
+    @ fopen infile
+    LDR r0, =infile
+    LDR r1, =read_mode
+    BL fopen
+    MOV r7, r0
+
+    @ fopen outfile
+    LDR r0, =outfile
+    LDR r1, =write_mode
+    BL fopen
+    MOV r8, r0
+
+    @ fgets(buffer, 256, r7)
+    LDR r0, =buffer
+    MOV r1, #256
+    MOV r2, r7
+    BL fgets
+
+    MOV r9, r0          @ Save pointer to buffer start
+    MOV r10, r0         @ Current scanning pointer
+
+	parse_loop:
+		@ Clear numParsed = 0
+		LDR r3, =numParsed
+		MOV r4, #0
+		STR r4, [r3]
+
+		@ sscanf(r10, "%d%n", &intBuffer, &numParsed)
+		MOV r0, r10
+		LDR r1, =formatInt2
+		LDR r2, =intBuffer
+		@ r3 already = &numParsed
+		BL sscanf
+		MOV r4, r0      @ Save sscanf return value
+
+		@ Debug: print parsed value
+		LDR r0, =fmt_debug1
+		LDR r1, =intBuffer
+		LDR r1, [r1]
+		BL printf
+
+		@ Debug: print chars read
+		LDR r0, =fmt_debug2
+		LDR r1, =numParsed
+		LDR r1, [r1]
+		BL printf
+
+		@ Check sscanf return value
+		CMP r4, #1
+		BNE end_parse_loop
+
+		@ Load ciphertext into r0
+		LDR r0, =intBuffer
+		LDR r0, [r0]        @ r0 = ciphertext
+		MOV r1, r5          @ r1 = d
+		MOV r2, r6          @ r2 = n
+		BL modPow           @ r0 = decrypted char
+
+		MOV r9, r0
+		LDR r0, =fmt_debug1
+		MOV r1, r9
+		BL printf
+
+		MOV r0, r9
+		MOV r1, r8          @ r1 = FILE*
+		BL fputc            @ write decrypted char
+
+		@ Advance pointer: r10 += numParsed
+		LDR r3, =numParsed
+		LDR r3, [r3]
+		CMP r3, #0
+		BEQ end_parse_loop
+		ADD r10, r10, r3
+
+		B parse_loop
+
+	end_parse_loop:
+    MOV r0, r7
+    BL fclose
+    MOV r0, r8
+    BL fclose
+
+    @ Restore stack
+    LDR lr, [sp, #0]
+    LDR r4, [sp, #4]
+    LDR r5, [sp, #8]
+    LDR r6, [sp, #12]
+    LDR r7, [sp, #16]
+    LDR r8, [sp, #20]
+    LDR r9, [sp, #24]
+    LDR r10, [sp, #28]
+    ADD sp, sp, #32
+    MOV pc, lr
+# END DecryptMessage
+
+#
+# Function: modPow
+# Author: [Your Name]
+# Date: [Today's Date]
+#
+# Purpose:
+#   Performs modular exponentiation using the square-and-multiply algorithm:
+#       result = (base^exponent) mod modulus
+#   This avoids overflow by applying the modulus at every multiplication step.
+#
+# Inputs:
+#   r0 - base (integer, m)
+#   r1 - exponent (integer, e)
+#   r2 - modulus (integer, n)
+#
+# Output:
+#   r0 - result of (base^exponent) mod modulus
+#
+# Notes:
+#   - Assumes all inputs are positive integers
+#   - This is safe for use with RSA where large powers would otherwise overflow
+#
+# Pseudocode:
+# int modPow(int base, int exponent, int modulus) {
+#    int result = 1;
+#    base = base % modulus;
+#
+#    while (exponent > 0) {
+#        if (exponent % 2 == 1)
+#            result = (result * base) % modulus;
+#
+#        exponent = exponent / 2;
+#        base = (base * base) % modulus;
+#    }
+#
+#    return result;
+# }
+.text
+.global modPow
+modPow:
+    # Program Dictionary:
+    # r0 - base
+    # r1 - exponent
+    # r2 - modulus
+    # r4 - base
+    # r5 - exponent
+    # r6 - modulus
+    # r7 - result
+    # r8 - scratch
+
+    # Push registers
     SUB sp, sp, #24
     STR lr, [sp, #0]
     STR r4, [sp, #4]
@@ -1247,52 +1372,48 @@ testfunc:
     STR r7, [sp, #16]
     STR r8, [sp, #20]
 
-    MOV r5, r0      @ d
-    MOV r6, r1      @ n
+    # Copy input values
+    MOV r4, r0      @ base
+    MOV r5, r1      @ exponent
+    MOV r6, r2      @ modulus
+    MOV r7, #1      @ result = 1
 
-    @ fopen input
-    LDR r0, =filename
-    LDR r1, =read_mode
-    BL fopen
-    MOV r7, r0      @ input file pointer
+    # base = base % mod
+    MOV r0, r4
+    MOV r1, r6
+    BL mod
+    MOV r4, r0      @ base = base % mod
 
-    @ fopen output
-    LDR r0, =outfile
-    LDR r1, =write_mode
-    BL fopen
-    MOV r8, r0      @ output file pointer
+	modPow_loop:
+		CMP r5, #0
+		BEQ modPow_done
 
-    decrypt_loop:
-		MOV r0, r7        @ r0 = input FILE*
-		BL fgetc          @ r0 = c (encrypted character), or -1 on EOF
+		AND r8, r5, #1      @ check if exponent is odd
+		CMP r8, #0
+		BEQ skip_mult
 
-		MVN r1, #0        @ r1 = 0xFFFFFFFF
-		CMP r0, r1
-		BEQ close_files   @ Exit loop on EOF
+		# result = (result * base) % mod
+		MUL r8, r7, r4
+		MOV r0, r8
+		MOV r1, r6
+		BL mod
+		MOV r7, r0
 
-		@ r0 = c
-		MOV r1, r5        @ r1 = d
-		BL pow            @ r0 = c^d
+		skip_mult:
+		# base = (base * base) % mod
+		MUL r8, r4, r4
+		MOV r0, r8
+		MOV r1, r6
+		BL mod
+		MOV r4, r0
 
-		MOV r1, r6        @ r1 = n
-		BL mod            @ r0 = (c^d) % n = m (decrypted char)
+		LSR r5, r5, #1      @ exponent >>= 1
+		B modPow_loop
 
-		MOV r1, r8        @ r1 = output FILE*
-		BL fputc          @ fputc(m, output)
+	modPow_done:
+    MOV r0, r7          @ return result
 
-		B decrypt_loop
-
-    close_files:
-      MOV r0, r7
-      BL fclose
-
-      MOV r0, r8
-      BL fclose
-
-      B end_program
-
-    end_program:
-    @ Restore stack
+    # Pop registers
     LDR lr, [sp, #0]
     LDR r4, [sp, #4]
     LDR r5, [sp, #8]
@@ -1302,49 +1423,39 @@ testfunc:
     ADD sp, sp, #24
     MOV pc, lr
 
-
-
 .data
-	formatFlush: .asciz "%*c"
+	promptP: .asciz "Please enter a P value: "
+	promptQ: .asciz "Please enter a Q value: "
+	valueP: .word 0
+	valueQ:	.word 0
+	flushBuffer: .word 0
 	formatInt: .asciz "%d"
 	formatStr: .asciz "%[^\n]"
 	inputString: .space 512
+	rsaKeysMsg:      .asciz "\nYour RSA keys have been generated:\n"
+	publicKeyMsg:    .asciz "Public Key: (e = %d, n = %d)\n"
+	privateKeyMsg:   .asciz "Private Key: (d = %d, n = %d)\n"
+	formatStringFile:  .asciz "%d"
 	modulusN: .word 0
 	promptModulusN: .asciz "Please enter your calculated n value:\n"
 	promptPublicExponent: .asciz "Please enter your calculated public key (e) value:\n"
 	promptString: .asciz "Please enter a message for encryption. 500 characters max:\n"
 	publicExponent: .word 0
 	promptInstructions: .asciz "\nTo generate keys, please enter a P and Q value.\nP and Q must be integers, prime, positive, and smaller than 50.\n"
-	promptP: .asciz "Please enter a P value: "
-	promptQ: .asciz "Please enter a Q value: "
-	valueP: .word 0
-	valueQ:	.word 0
-	rsaKeysMsg:      .asciz "\nYour RSA keys have been generated:\n"
-	publicKeyMsg:    .asciz "Public Key: (e = %d, n = %d)\n"
-	privateKeyMsg:   .asciz "Private Key: (d = %d, n = %d)\n"
-	formatStringFile:  .asciz "%d"
-	ciphertext:  .word 0
-	encryptedFile:  .asciz "encrypted.txt"
-	plaintextFile:  .asciz "plaintext.txt"
-	read:  .asciz "r"
-	write:  .asciz "w"
-	outputFile:	.asciz "encrypted.txt"
-	open:	.asciz "w"
-	printFormat:	.asciz "%d "
 	test: .asciz "Fuck"
-
-  filename:     .asciz "encrypted.txt"
-  outfile:      .asciz "plaintext.txt"
-  read_mode:    .asciz "r"
-  write_mode:   .asciz "w"
-  sscanf_fmt:   .asciz "%d%n"
-  buffer:       .space 100
-  cipher_val:   .word 0
-  chars_read:   .word 0
-
-  char_fmt:   .asciz "%s"
-  char_buf:   .space 2        @ 1 byte for char, 1 for null terminator
-
-
-
+	outfile:      .asciz "plaintext.txt"
+	outputFile:	.asciz "encrypted.txt"
+	read_mode:    .asciz "r"
+	write_mode:   .asciz "w"
+	numParsed:   .word 0
+	printFormat:	.asciz "%d "
+	writeMode:      .asciz "w"
+	formatInt2:   .asciz "%d%n"
+	intBuffer: .word 0
+	fmt_debug1: .asciz "Parsed value: %d\n"
+	fmt_debug2: .asciz "Chars read: %d\n"
+	infile:      .asciz "encrypted.txt"
+	debugErr:       .asciz "Failed to open file\n"
+	buffer:       .space 512
+	formatFlush: .asciz "%*c"
 	
