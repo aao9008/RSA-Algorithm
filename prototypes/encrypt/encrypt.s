@@ -2,25 +2,17 @@
 # Author: Kosuke Ito
 # Purpose: Encryption function to encrypted.txt
 
-.text
-.global encryptMessage
-
-.extern mod
-.extern pow
-.extern fopen
-.extern fprintf
-.extern fclose
 
 # Function: encryptMessage
 # Purpose: Encrypt a string and write to encrypted.txt
-
 # Inputs:
 # r0 - pointer to input string
 # r1 - public key exponent (e)
 # r2 - RSA modulus (n)
 # Output:
 # r0 - number of characters encrypted
-
+.text
+.global encryptMessage
 encryptMessage:
 	# Program Dictionary:
 	# r4 - String pointer
