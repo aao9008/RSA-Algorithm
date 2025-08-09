@@ -1,4 +1,4 @@
-# Program name: main.s
+# Program name: RSA.s
 # Author: Team 3
 # Date: 8/8/25
 # Purpose: 
