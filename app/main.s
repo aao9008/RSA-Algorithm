@@ -25,7 +25,9 @@
 #   - Option to exit the program
 
 .text
+
 .global main
+
 main:
     SUB sp, sp, #4
     STR lr, [sp, #0]
@@ -44,38 +46,50 @@ main:
         LDR r1, =inputSelection
         LDR r1, [r1, #0]
         
-        # If user selection == 0
+        # If user wants to Generate Keys (i.e. user input selection == 0)
+        #    Then generate and display keys and return
+        #    Otherwise, check whether user wants to Encrypt a message
         CMP r1, #0
         BNE checkEncrypt
-        # Then Generate and display keys
-        BL generateAndDisplayKeys
-        B endSelectionLoop
+            # Then Generate and display keys
+            BL generateAndDisplayKeys
+            B endSelectionLoop
 
+        # If user wants to Encrypt a message (i.e. user input selection == 1)
+        #    Then encrypt the message and return
+        #    Otherwise, check whether user wants to Decrypt a message
         checkEncrypt:
         # If user selection == 1
         CMP r1, #1
         BNE checkDecrypt
-        # Then encrypt message
-        BL encrypt
-        B endSelectionLoop
+            # Then encrypt message
+            BL encrypt
+            B endSelectionLoop
 
+        # If user wants to Decrypt a message (i.e. user input selection == 2)
+        #    Then decrypt message and return
+        #    Otherwise, check whether the user wants to exit the program
         checkDecrypt:
         # If user selection == 2
         CMP r1, #2
         BNE checkExit
-        # Then decrypt message
-        BL decrypt
-        B endSelectionLoop
+            # Then decrypt message
+            BL decrypt
+            B endSelectionLoop
 
+	# If user wants to exit the program (i.e. user input selection == 3)
+        #    Exit the program/return
+        #    Otherwise, reprompt the user with the selection menu
         checkExit:
         # If user selection == 3
         CMP r1, #3
         BNE startSelectionLoop
+
     endSelectionLoop:
-    
-    LDR lr, [sp, #0]
-    ADD sp, sp, #4
-    MOV pc, lr
+        LDR lr, [sp, #0]
+        ADD sp, sp, #4
+        MOV pc, lr
+
 # END main
 
 .data
