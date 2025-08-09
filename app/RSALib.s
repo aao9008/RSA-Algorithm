@@ -1272,7 +1272,7 @@ decrypt:
 .global decryptMessage
 #
 # Function name: decryptMessage
-# Author: Portia Stevenson
+# Author: Portia Stevenson and Alfredo Ormeno Zuniga
 # Date: 8/4/2025
 # Purpose: Reads encrypted ciphertext values from encrypted.txt, decrypts 
 # each value using the RSA decryption formula m = c^d mod n, and writes 
@@ -1402,7 +1402,7 @@ decryptMessage:
     MOV r0, r8
     BL fclose
 
-    @ Restore stack
+    # Pop the stack
     LDR lr, [sp, #0]
     LDR r4, [sp, #4]
     LDR r5, [sp, #8]
@@ -1420,7 +1420,7 @@ decryptMessage:
 .global modPow
 #
 # Function: modPow
-# Author: 
+# Author: Alfredo Ormeno Zuniga
 #
 # Purpose:
 #   Performs modular exponentiation using the square-and-multiply algorithm:
