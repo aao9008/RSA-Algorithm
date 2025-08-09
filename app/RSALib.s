@@ -1207,7 +1207,7 @@ encryptMessage:
 
 .text
 .global decrypt
-# Function: encrypt
+# Function: decrypt
 # Author: Alfredo Ormeno Zuniga
 # Date: 8/8/2025
 # Purpose: To prompt the user for RSA encryption parameters (private exponent and
@@ -1229,10 +1229,15 @@ encryptMessage:
 #     }
 #
 decrypt:
-	SUB sp, sp, #4
-	STR lr, [sp, #0]
+    # Program dictionary:
+    #	r0 - prompts
+    # 	r1 - scanned inputs
 
-	# Prompt user for public exponent
+    # Push the stack
+    SUB sp, sp, #4
+    STR lr, [sp, #0]
+
+    # Prompt user for public exponent
     LDR r0, =promptPrivateExponent
     BL printf
 
@@ -1248,18 +1253,19 @@ decrypt:
     # Get user input for modulus n (int)
     LDR r0, =formatInt
     LDR r1, =modulusN
-	BL scanf
+    BL scanf
 
-	LDR r0, =privateExponent
-	LDR r0, [r0, #0]
-	LDR r1, =modulusN
-	LDR r1, [r1, #0]
+    LDR r0, =privateExponent
+    LDR r0, [r0, #0]
+    LDR r1, =modulusN
+    LDR r1, [r1, #0]
+    BL decryptMessage
 
-	BL decryptMessage
+    # Pop the stack
+    LDR lr, [sp, #0]
+    ADD sp, sp, #4
+    MOV pc, lr
 
-	LDR lr, [sp, #0]
-	ADD sp, sp, #4
-	MOV pc, lr
 # END decrypt
 
 .text
@@ -1291,7 +1297,16 @@ decrypt:
 #   Close both files and return
 #   
 decryptMessage:
-    @ Reserve space
+    # Program dictionary:
+    #	r4 - string pointer
+    #	r5 - exponent e
+    # 	r6 - integer modulus n
+    #	r7 - file
+    #	r8 - character counter
+    # 	r9 - current character ASCII value
+    # 	r10 - encrypted result
+
+    # Push the stack
     SUB sp, sp, #32
     STR lr, [sp, #0]
     STR r4, [sp, #4]
@@ -1302,22 +1317,22 @@ decryptMessage:
     STR r9, [sp, #24]
     STR r10, [sp, #28]
 
-    MOV r5, r0      @ private exponent d
-    MOV r6, r1      @ modulus n
+    MOV r5, r0       	// private exponent d
+    MOV r6, r1      	// modulus n
 
-    @ fopen encrypted file
+    # fopen encrypted file
     LDR r0, =encryptedFile
     LDR r1, =readMode
     BL fopen
-    MOV r7, r0
+    MOV r7, r0 		// 
 
-    @ fopen decryptedFile
+    # fopen decryptedFile
     LDR r0, =decryptedFile
     LDR r1, =writeMode
     BL fopen
     MOV r8, r0
 
-    @ fgets(buffer, 256, r7)
+    # fgets(buffer, 256, r7)
     LDR r0, =buffer
     MOV r1, #512
     MOV r2, r7
