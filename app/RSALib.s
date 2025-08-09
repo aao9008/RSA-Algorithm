@@ -989,6 +989,14 @@ generateAndDisplayKeys:
 	BL modulus 		@ n = p * q
 	MOV r6, r0 		@ r6 <- n
 
+	# If n < 127
+	CMP r6, #127
+	BGT calculateTotient
+	LDR r0, =modulusNError
+	BL printf
+	B startPLoop
+
+	calculateTotient:
 	# Calculate the totient
 	MOV r0, r4 		@ r0 <- p
 	MOV r1, r5 		@ r1 <- q
@@ -1138,43 +1146,44 @@ encryptMessage:
     MOV r6, r2      @ r6 = modulus n
 
     # Open file: fopen("encrypted.txt", "w")
-    LDR r0, =encryptedFile
-    LDR r1, =writeMode
-    BL fopen
-    MOV r7, r0      @ r7 = file
+    LDR r0, =encryptedFile  @ file name is encrypted.txt
+    LDR r1, =writeMode  @ open file in write mode
+    BL fopen 
+    MOV r7, r0 @ r7 = file handle
 
     CMP r7, #0
-    BEQ fopen_failed
+    BEQ fopenFailed
 
-    MOV r8, #0      @ r8 = character counter
+    MOV r8, #0      @ r8 = character counter (initialize to 0)
 
-	encrypt_loop:
-		LDRB r9, [r4]       @ load current character (ASCII)
-		CMP r9, #0
-		BEQ encrypt_done
+  # Encrypt each character in input string. 
+	startEncryptLoop:
+		LDRB r9, [r4] @ load current character (ASCII) into r9
+		CMP r9, #0  @ check if it's the end of the string (null terminator)
+		BEQ endEncryptLoop @ if it's the end of the string, jump to done
 
 		@ Encrypt: c = (m^e) mod n
-		MOV r0, r9
-		MOV r1, r5
-		MOV r2, r6
-		BL modPow
-		MOV r10, r0         @ r10 = encrypted result
+		MOV r0, r9  @ r0 = current character (m)
+		MOV r1, r5  @ r1 = exponent
+		MOV r2, r6  @ r2 = modulus n
+		BL modPow   @ call modPow to calculate m^e mod n
+		MOV r10, r0 @ r10 = encrypted result (c)
 
-		@ Write to file: fprintf(file, "%d ", c)
-		MOV r0, r7
-		LDR r1, =printFormat
-		MOV r2, r10
-		BL fprintf
+		@ Write the encrypted character to file: fprintf(file, "%d ", c)
+		MOV r0, r7 @ r0 = file handle
+		LDR r1, =printFormat @ r1 = format string for fprintf
+		MOV r2, r10 @ r2 = encrypted character c
+		BL fprintf @ call fprintf to write the encrypted character
 
-		ADD r4, r4, #1      @ advance string
-		ADD r8, r8, #1      @ increment char count
-		B encrypt_loop
+		ADD r4, r4, #1  @ advance to the next character in the string
+		ADD r8, r8, #1  @ increment char count
+		B startEncryptLoop  @ repeat the loop for the next character
 
-	encrypt_done:
-    	  MOV r0, r7
-    	  BL fclose
+	endEncryptLoop:
+    	  MOV r0, r7 @ r0 = file handle
+    	  BL fclose @ close the file
 
-    	  MOV r0, r8          @ return encrypted character count
+    	  MOV r0, r8 @ return encrypted character count
 
     # Pop the stack
     LDR r9, [sp, #0]
@@ -1185,12 +1194,12 @@ encryptMessage:
     LDR r4, [sp, #20]
     LDR lr, [sp, #24]
     ADD sp, sp, #28
-    MOV pc, lr
+    MOV pc, lr  
 
-  fopen_failed:
-    LDR r0, =debugErr
-    BL printf
-    MOV r0, #0
+  fopenFailed:
+    LDR r0, =debugErr @ load error message
+    BL printf @ print error message
+    MOV r0, #0  @ set return value to 0 in case of failure
 
     @ Restore stack and return
     LDR r9, [sp, #0]
@@ -1202,7 +1211,6 @@ encryptMessage:
     LDR lr, [sp, #24]
     ADD sp, sp, #28
     MOV pc, lr
-
 # END encryptMessage
 
 .text
@@ -1513,7 +1521,7 @@ modPow:
 		B modPow_loop
 
 	modPow_done:
-    		MOV r0, r7          @ return result
+  	MOV r0, r7          @ return result
 
    	# Pop the stack
    	LDR lr, [sp, #0]
@@ -1540,10 +1548,11 @@ modPow:
 	inputString: .space 512
 	intBuffer: .word 0
 	modulusN: .word 0
+	modulusNError: .asciz "\nThe product of p and q must be greater than 127!\n"
 	numParsed:  .word 0
 	printFormat: .asciz "%d "
 	privateExponent: .word 0
-	promptInstructions: .asciz "\nTo generate keys, please enter a P and Q value.\nP and Q must be integers, prime, positive, and smaller than 50.\n"
+	promptInstructions: .asciz "To generate keys, please enter a P and Q value.\nP and Q must be integers, prime, positive, smaller than 50, and their products must be creater than 127.\n"
 	privateKeyMsg:   .asciz "Private Key: (d = %d, n = %d)\n"
 	promptModulusN: .asciz "Please enter your calculated n value:\n"
 	promptP: .asciz "Please enter a P value: "
